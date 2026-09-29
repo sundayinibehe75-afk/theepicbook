@@ -18,7 +18,8 @@
     "password": "{{ db_admin_password }}",
     "database": "{{ db_name }}",
     "host": "{{ mysql_fqdn }}",
-    "dialect": "mysql"
+    "dialect": "mysql",
+    "dialectOptions": { "ssl": { "rejectUnauthorized": true } }
   }
 }
 

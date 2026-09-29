@@ -9,6 +9,7 @@
       - git
       - curl
       - rsync
+      - mysql-client
     state: present
 
 - name: Install PyMySQL for Ansible MySQL modules

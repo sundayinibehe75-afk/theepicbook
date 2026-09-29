@@ -11,6 +11,7 @@
     login_host: "{{ mysql_fqdn }}"
     login_user: "{{ db_admin_username }}"
     login_password: "{{ db_admin_password }}"
+    ca_cert: /etc/ssl/certs/ca-certificates.crt
   no_log: true
 
 - name: Check if the Author table already exists
@@ -18,6 +19,7 @@
     login_host: "{{ mysql_fqdn }}"
     login_user: "{{ db_admin_username }}"
     login_password: "{{ db_admin_password }}"
+    ca_cert: /etc/ssl/certs/ca-certificates.crt
     login_db: "{{ db_name }}"
     query: >
       SELECT COUNT(*) AS table_count
@@ -36,6 +38,7 @@
     login_host: "{{ mysql_fqdn }}"
     login_user: "{{ db_admin_username }}"
     login_password: "{{ db_admin_password }}"
+    ca_cert: /etc/ssl/certs/ca-certificates.crt
   when: author_table_check.query_result[0][0].table_count == 0
   no_log: true
 
@@ -44,6 +47,7 @@
     login_host: "{{ mysql_fqdn }}"
     login_user: "{{ db_admin_username }}"
     login_password: "{{ db_admin_password }}"
+    ca_cert: /etc/ssl/certs/ca-certificates.crt
     login_db: "{{ db_name }}"
     query: "SELECT COUNT(*) AS row_count FROM Author"
   register: author_row_check
@@ -57,6 +61,7 @@
     login_host: "{{ mysql_fqdn }}"
     login_user: "{{ db_admin_username }}"
     login_password: "{{ db_admin_password }}"
+    ca_cert: /etc/ssl/certs/ca-certificates.crt
   when: author_row_check.query_result[0][0].row_count == 0
   no_log: true
 
@@ -65,6 +70,7 @@
     login_host: "{{ mysql_fqdn }}"
     login_user: "{{ db_admin_username }}"
     login_password: "{{ db_admin_password }}"
+    ca_cert: /etc/ssl/certs/ca-certificates.crt
     login_db: "{{ db_name }}"
     query: "SELECT COUNT(*) AS row_count FROM Book"
   register: book_row_check
@@ -78,5 +84,6 @@
     login_host: "{{ mysql_fqdn }}"
     login_user: "{{ db_admin_username }}"
     login_password: "{{ db_admin_password }}"
+    ca_cert: /etc/ssl/certs/ca-certificates.crt
   when: book_row_check.query_result[0][0].row_count == 0
   no_log: true
