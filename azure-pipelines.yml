@@ -65,7 +65,7 @@ stages:
               set -e
               sudo apt-get update
               # python3-venv may not be preinstalled on the agent image.
-              sudo apt-get install -y python3-venv
+              sudo apt-get install -y python3-venv rsync
             displayName: "Ensure python3-venv is installed"
 
           - script: |
@@ -76,7 +76,7 @@ stages:
               python3 -m venv $(Agent.TempDirectory)/ansible-venv
               $(Agent.TempDirectory)/ansible-venv/bin/pip install --upgrade pip
               $(Agent.TempDirectory)/ansible-venv/bin/pip install ansible-core PyMySQL
-              $(Agent.TempDirectory)/ansible-venv/bin/ansible-galaxy collection install community.mysql
+              $(Agent.TempDirectory)/ansible-venv/bin/ansible-galaxy collection install community.mysql ansible.posix
             displayName: "Create venv and install Ansible + community.mysql"
 
           - task: DownloadSecureFile@1
@@ -119,7 +119,7 @@ stages:
           - script: |
               set -e
               sudo apt-get update
-              sudo apt-get install -y python3-venv
+              sudo apt-get install -y python3-venv rsync
             displayName: "Ensure python3-venv is installed"
 
           - script: |
@@ -127,7 +127,7 @@ stages:
               python3 -m venv $(Agent.TempDirectory)/ansible-venv
               $(Agent.TempDirectory)/ansible-venv/bin/pip install --upgrade pip
               $(Agent.TempDirectory)/ansible-venv/bin/pip install ansible-core PyMySQL
-              $(Agent.TempDirectory)/ansible-venv/bin/ansible-galaxy collection install community.mysql
+              $(Agent.TempDirectory)/ansible-venv/bin/ansible-galaxy collection install community.mysql ansible.posix
             displayName: "Create venv and install Ansible + community.mysql"
 
           - task: DownloadSecureFile@1
@@ -195,7 +195,7 @@ stages:
           - script: |
               set -e
               sudo apt-get update
-              sudo apt-get install -y python3-venv
+              sudo apt-get install -y python3-venv rsync
             displayName: "Ensure python3-venv is installed"
 
           - script: |
@@ -203,7 +203,7 @@ stages:
               python3 -m venv $(Agent.TempDirectory)/ansible-venv
               $(Agent.TempDirectory)/ansible-venv/bin/pip install --upgrade pip
               $(Agent.TempDirectory)/ansible-venv/bin/pip install ansible-core PyMySQL
-              $(Agent.TempDirectory)/ansible-venv/bin/ansible-galaxy collection install community.mysql
+              $(Agent.TempDirectory)/ansible-venv/bin/ansible-galaxy collection install community.mysql ansible.posix
             displayName: "Create venv and install Ansible + community.mysql"
 
           - task: DownloadSecureFile@1
