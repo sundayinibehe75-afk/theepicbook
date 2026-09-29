@@ -1,19 +1,329 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
+# Application Pipeline for EpicBook
+#
+# Provisions nothing (that's the Infrastructure Pipeline's job). This pipeline
+# takes the two already-running Azure VMs described in ansible/inventory/hosts.ini
+# and configures + deploys EpicBook onto them via the Ansible roles in ansible/.
+#
+# Runs entirely on a self-hosted agent (StaticSiteAgentPool) - no Microsoft-hosted
+# images. Ansible is installed into a per-job Python venv because the agent's
+# Ubuntu blocks system-wide pip installs.
 
 trigger:
-- main
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      # App source
+      - server.js
+      - package.json
+      - package-lock.json
+      - routes/*
+      - models/*
+      - views/*
+      - public/*
+      - config/*
+      - db/*
+      # Deployment config
+      - ansible/*
+      - azure-pipelines.yml
 
-pool:
-  vmImage: ubuntu-latest
+# variables must be a single list here since it mixes a plain name/value pair
+# with a variable group reference - the two syntaxes can't be mixed under one
+# mapping form.
+variables:
+  # Name of the Secure File uploaded to Azure DevOps (Pipelines > Library > Secure files)
+  # holding the SSH private key used to reach azureuser@<frontend|backend>.
+  - name: sshKeySecureFile
+    value: "epicbook-key"
 
-steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+  # Variable group supplying the secret pipeline variables mysqlAdminUsername /
+  # mysqlAdminPassword, which are passed to Ansible as db_admin_username /
+  # db_admin_password extra-vars. Replace with the real group name.
+  - group: Epicbook-mysql-secrets
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+stages:
+  # ---------------------------------------------------------------------------
+  # STAGE 1: Prepare
+  # Confirms the agent can build a working Ansible environment. Nothing here
+  # touches the target hosts.
+  # ---------------------------------------------------------------------------
+  - stage: Prepare
+    displayName: "Prepare Ansible Environment"
+    jobs:
+      - job: Prepare
+        displayName: "Install Ansible and verify tooling"
+        pool:
+          name: StaticSiteAgentPool
+        workspace:
+          clean: all
+        steps:
+          - checkout: self
+            displayName: "Checkout repository"
+
+          - script: |
+              set -e
+              sudo apt-get update
+              # python3-venv may not be preinstalled on the agent image.
+              sudo apt-get install -y python3-venv
+            displayName: "Ensure python3-venv is installed"
+
+          - script: |
+              set -e
+              # Isolated venv under Agent.TempDirectory: avoids the system-wide
+              # pip install block on this Ubuntu agent and keeps the install
+              # out of the workspace that gets wiped by workspace:clean.
+              python3 -m venv $(Agent.TempDirectory)/ansible-venv
+              $(Agent.TempDirectory)/ansible-venv/bin/pip install --upgrade pip
+              $(Agent.TempDirectory)/ansible-venv/bin/pip install ansible-core PyMySQL
+              $(Agent.TempDirectory)/ansible-venv/bin/ansible-galaxy collection install community.mysql
+            displayName: "Create venv and install Ansible + community.mysql"
+
+          - task: DownloadSecureFile@1
+            name: sshKey
+            displayName: "Download SSH private key"
+            inputs:
+              secureFile: "$(sshKeySecureFile)"
+
+          - script: |
+              set -e
+              chmod 600 "$(sshKey.secureFilePath)"
+            displayName: "Restrict SSH key permissions"
+
+          - script: |
+              set -e
+              $(Agent.TempDirectory)/ansible-venv/bin/ansible --version
+            displayName: "Print ansible --version"
+
+  # ---------------------------------------------------------------------------
+  # STAGE 2: Validate
+  # Each stage in this pipeline runs its own job on a (potentially) different
+  # agent process, and workspace: clean: all wipes the workspace between jobs -
+  # so nothing from Prepare (venv, downloaded key) can be relied on here. Every
+  # stage repeats the setup independently.
+  # ---------------------------------------------------------------------------
+  - stage: Validate
+    displayName: "Validate Inventory and Playbook"
+    dependsOn: Prepare
+    jobs:
+      - job: Validate
+        displayName: "Syntax-check playbook and ping hosts"
+        pool:
+          name: StaticSiteAgentPool
+        workspace:
+          clean: all
+        steps:
+          - checkout: self
+            displayName: "Checkout repository"
+
+          - script: |
+              set -e
+              sudo apt-get update
+              sudo apt-get install -y python3-venv
+            displayName: "Ensure python3-venv is installed"
+
+          - script: |
+              set -e
+              python3 -m venv $(Agent.TempDirectory)/ansible-venv
+              $(Agent.TempDirectory)/ansible-venv/bin/pip install --upgrade pip
+              $(Agent.TempDirectory)/ansible-venv/bin/pip install ansible-core PyMySQL
+              $(Agent.TempDirectory)/ansible-venv/bin/ansible-galaxy collection install community.mysql
+            displayName: "Create venv and install Ansible + community.mysql"
+
+          - task: DownloadSecureFile@1
+            name: sshKey
+            displayName: "Download SSH private key"
+            inputs:
+              secureFile: "$(sshKeySecureFile)"
+
+          - script: |
+              set -e
+              chmod 600 "$(sshKey.secureFilePath)"
+            displayName: "Restrict SSH key permissions"
+
+          - script: |
+              set -e
+              $(Agent.TempDirectory)/ansible-venv/bin/ansible-inventory \
+                -i ansible/inventory/hosts.ini --list
+            displayName: "Print resolved inventory"
+            env:
+              ANSIBLE_CONFIG: "$(Build.SourcesDirectory)/ansible/ansible.cfg"
+
+          - script: |
+              set -e
+              $(Agent.TempDirectory)/ansible-venv/bin/ansible-playbook \
+                ansible/site.yml -i ansible/inventory/hosts.ini --syntax-check
+            displayName: "Syntax-check site.yml"
+            env:
+              ANSIBLE_CONFIG: "$(Build.SourcesDirectory)/ansible/ansible.cfg"
+
+          - script: |
+              set -e
+              # Hosts may have been recreated by the Infrastructure Pipeline with
+              # new SSH host keys that this agent has never seen. Without
+              # disabling host key checking, the first-connection prompt has no
+              # TTY to answer it and every host comes back UNREACHABLE.
+              $(Agent.TempDirectory)/ansible-venv/bin/ansible \
+                -i ansible/inventory/hosts.ini all -m ping \
+                -e "ansible_ssh_private_key_file=$(sshKey.secureFilePath)"
+            displayName: "Ping all hosts over SSH"
+            env:
+              ANSIBLE_CONFIG: "$(Build.SourcesDirectory)/ansible/ansible.cfg"
+              ANSIBLE_HOST_KEY_CHECKING: "False"
+
+  # ---------------------------------------------------------------------------
+  # STAGE 3: Configure and Deploy
+  # Runs the real playbook against the live hosts. site.yml's own verification
+  # play executes as part of this same run, so its results are captured here
+  # and exposed as stage output variables for Stage 4 to check - Stage 4 does
+  # not re-run the playbook.
+  # ---------------------------------------------------------------------------
+  - stage: ConfigureAndDeploy
+    displayName: "Configure and Deploy"
+    dependsOn: Validate
+    jobs:
+      - job: Deploy
+        displayName: "Run site.yml against frontend and backend"
+        pool:
+          name: StaticSiteAgentPool
+        workspace:
+          clean: all
+        steps:
+          - checkout: self
+            displayName: "Checkout repository"
+
+          - script: |
+              set -e
+              sudo apt-get update
+              sudo apt-get install -y python3-venv
+            displayName: "Ensure python3-venv is installed"
+
+          - script: |
+              set -e
+              python3 -m venv $(Agent.TempDirectory)/ansible-venv
+              $(Agent.TempDirectory)/ansible-venv/bin/pip install --upgrade pip
+              $(Agent.TempDirectory)/ansible-venv/bin/pip install ansible-core PyMySQL
+              $(Agent.TempDirectory)/ansible-venv/bin/ansible-galaxy collection install community.mysql
+            displayName: "Create venv and install Ansible + community.mysql"
+
+          - task: DownloadSecureFile@1
+            name: sshKey
+            displayName: "Download SSH private key"
+            inputs:
+              secureFile: "$(sshKeySecureFile)"
+
+          - script: |
+              set -e
+              chmod 600 "$(sshKey.secureFilePath)"
+            displayName: "Restrict SSH key permissions"
+
+          - script: |
+              set -o pipefail
+              # Deliberately no "set -e" here: if ansible-playbook fails (a
+              # task failure or an unreachable host), the pipeline below would
+              # otherwise abort this script before the PLAY RECAP gets parsed
+              # and published. The real pass/fail decision is made at the end
+              # of this script, after the recap has been read.
+              mkdir -p "$(Agent.TempDirectory)/ansible-run"
+              LOG_FILE="$(Agent.TempDirectory)/ansible-run/site-run.log"
+
+              # DB_ADMIN_USERNAME / DB_ADMIN_PASSWORD come from the secret
+              # pipeline variables mapped in env: below - secret variables are
+              # never exposed to script steps unless explicitly mapped. Values
+              # are passed to Ansible as extra-vars and never echoed.
+              $(Agent.TempDirectory)/ansible-venv/bin/ansible-playbook \
+                -i ansible/inventory/hosts.ini ansible/site.yml \
+                -e "ansible_ssh_private_key_file=$(sshKey.secureFilePath)" \
+                -e "db_admin_username=$DB_ADMIN_USERNAME" \
+                -e "db_admin_password=$DB_ADMIN_PASSWORD" \
+                | tee "$LOG_FILE"
+              PLAYBOOK_RC=${PIPESTATUS[0]}
+              echo "ansible-playbook exited with code $PLAYBOOK_RC (pass/fail decision is made by the Verify stage from the recap totals below, not from this exit code)"
+
+              # Pull the PLAY RECAP totals out of the log and publish them as
+              # stage output variables for Stage 4 - the full log itself is
+              # never published as an artifact since it may contain host
+              # details from task output.
+              RECAP_LINES=$(grep -E '^(app_server|backend_server)\s*:' "$LOG_FILE" || true)
+
+              TOTAL_HOSTS=$(echo "$RECAP_LINES" | grep -c . || true)
+              TOTAL_FAILED=$(echo "$RECAP_LINES" | grep -oE 'failed=[0-9]+' | grep -oE '[0-9]+' | awk '{s+=$1} END{print s+0}')
+              TOTAL_UNREACHABLE=$(echo "$RECAP_LINES" | grep -oE 'unreachable=[0-9]+' | grep -oE '[0-9]+' | awk '{s+=$1} END{print s+0}')
+
+              TOTAL_HOSTS=${TOTAL_HOSTS:-0}
+              TOTAL_FAILED=${TOTAL_FAILED:-0}
+              TOTAL_UNREACHABLE=${TOTAL_UNREACHABLE:-0}
+
+              # If the recap couldn't be found at all (e.g. a connection error
+              # aborted the run before any recap was printed), treat that as
+              # every host unreachable rather than silently reporting zeros.
+              if [ -z "$RECAP_LINES" ]; then
+                TOTAL_UNREACHABLE=2
+              fi
+
+              echo "##vso[task.setvariable variable=hostsTouched;isOutput=true]$TOTAL_HOSTS"
+              echo "##vso[task.setvariable variable=totalFailed;isOutput=true]$TOTAL_FAILED"
+              echo "##vso[task.setvariable variable=totalUnreachable;isOutput=true]$TOTAL_UNREACHABLE"
+
+              # This step intentionally always exits 0: it always succeeds in
+              # capturing and publishing the recap totals. The Verify stage
+              # (Stage 4) is where the actual pass/fail decision is made, so
+              # that decision is visible even when the recap shows failures.
+              exit 0
+            displayName: "Run ansible-playbook site.yml and publish recap totals"
+            name: runPlaybook
+            env:
+              ANSIBLE_CONFIG: "$(Build.SourcesDirectory)/ansible/ansible.cfg"
+              ANSIBLE_HOST_KEY_CHECKING: "False"
+              DB_ADMIN_USERNAME: "$(mysqlAdminUsername)"
+              DB_ADMIN_PASSWORD: "$(mysqlAdminPassword)"
+
+  # ---------------------------------------------------------------------------
+  # STAGE 4: Verify
+  # site.yml's verification play already ran inside Stage 3 - this stage only
+  # inspects the PLAY RECAP totals Stage 3 published and reports the result.
+  # It never re-runs ansible-playbook.
+  # ---------------------------------------------------------------------------
+  - stage: Verify
+    displayName: "Verify Deployment"
+    dependsOn: ConfigureAndDeploy
+    variables:
+      hostsTouched: $[ stageDependencies.ConfigureAndDeploy.Deploy.outputs['runPlaybook.hostsTouched'] ]
+      totalFailed: $[ stageDependencies.ConfigureAndDeploy.Deploy.outputs['runPlaybook.totalFailed'] ]
+      totalUnreachable: $[ stageDependencies.ConfigureAndDeploy.Deploy.outputs['runPlaybook.totalUnreachable'] ]
+    jobs:
+      - job: Verify
+        displayName: "Check recap totals and report result"
+        pool:
+          name: StaticSiteAgentPool
+        workspace:
+          clean: all
+        steps:
+          - checkout: self
+            displayName: "Checkout repository"
+
+          - script: |
+              set -e
+              echo "Hosts touched: $(hostsTouched)"
+              echo "Failed:        $(totalFailed)"
+              echo "Unreachable:   $(totalUnreachable)"
+
+              if [ "$(totalFailed)" != "0" ] || [ "$(totalUnreachable)" != "0" ]; then
+                echo "##vso[task.logissue type=error]Deployment reported failed=$(totalFailed) unreachable=$(totalUnreachable) - see Stage 3 logs."
+                echo "##vso[task.complete result=Failed;]"
+                exit 1
+              fi
+
+              # Read the frontend's IP straight from the inventory rather than
+              # hardcoding it here, since the Infrastructure Pipeline can
+              # recreate the VM with a new address.
+              FRONTEND_IP=$(grep -A1 '^\[frontend\]' ansible/inventory/hosts.ini | grep -oE 'ansible_host=[0-9.]+' | cut -d= -f2)
+
+              echo ""
+              echo "=== EpicBook Deployment Summary ==="
+              echo "Hosts touched: $(hostsTouched)"
+              echo "Failed:        0"
+              echo "Unreachable:   0"
+              echo "Frontend URL:  http://$FRONTEND_IP"
+              echo "===================================="
+            displayName: "Report deployment summary"
