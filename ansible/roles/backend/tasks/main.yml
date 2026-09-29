@@ -16,8 +16,8 @@
   ansible.builtin.file:
     path: /opt/epicbook
     state: directory
-    owner: ubuntu
-    group: ubuntu
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
     mode: '0755'
 
 - name: Deploy EpicBook application code
@@ -38,8 +38,8 @@
   ansible.builtin.template:
     src: db-config.j2
     dest: /opt/epicbook/config/config.json
-    owner: ubuntu
-    group: ubuntu
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
     mode: '0600'
   no_log: true
   notify: Restart epicbook

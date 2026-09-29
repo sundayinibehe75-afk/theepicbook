@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 Type=simple
-User=ubuntu
+User={{ ansible_user }}
 WorkingDirectory=/opt/epicbook
 Environment=NODE_ENV=production
 Environment=PORT={{ backend_app_port }}
