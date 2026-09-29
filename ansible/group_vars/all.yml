@@ -1,2 +1,4 @@
 backend_private_ip: "10.20.2.4"
 mysql_fqdn: "epicbook-db.mysql.database.azure.com"
+backend_app_port: 8080
+db_name: "bookstore"
