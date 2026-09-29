@@ -38,6 +38,7 @@
         login_host: "{{ mysql_fqdn }}"
         login_user: "{{ db_admin_username }}"
         login_password: "{{ db_admin_password }}"
+        ca_cert: /etc/ssl/certs/ca-certificates.crt
         login_db: "{{ db_name }}"
         query: "SELECT COUNT(*) AS row_count FROM Author"
       register: verify_author_count
@@ -53,6 +54,7 @@
         login_host: "{{ mysql_fqdn }}"
         login_user: "{{ db_admin_username }}"
         login_password: "{{ db_admin_password }}"
+        ca_cert: /etc/ssl/certs/ca-certificates.crt
         login_db: "{{ db_name }}"
         query: "SELECT COUNT(*) AS row_count FROM Book"
       register: verify_book_count
