@@ -1,0 +1,154 @@
+{
+  "appendCommitMessageToRunName": true,
+  "buildNumber": "20260929.15",
+  "buildNumberRevision": 15,
+  "controller": null,
+  "definition": {
+    "createdDate": null,
+    "drafts": [],
+    "id": 4,
+    "name": "Epicbook-App-Pipeline",
+    "path": "\\",
+    "project": {
+      "abbreviation": null,
+      "defaultTeamImageUrl": null,
+      "description": null,
+      "id": "0043dd54-cb6e-45f9-9f2d-8742b3262588",
+      "lastUpdateTime": "2026-09-25T19:28:42.237Z",
+      "name": "EpicBook-Deployment",
+      "revision": 35,
+      "state": "wellFormed",
+      "url": "https://dev.azure.com/emmanuelmelanie60/_apis/projects/0043dd54-cb6e-45f9-9f2d-8742b3262588",
+      "visibility": "private"
+    },
+    "queueStatus": "enabled",
+    "revision": 2,
+    "type": "build",
+    "uri": "vstfs:///Build/Definition/4",
+    "url": "https://dev.azure.com/emmanuelmelanie60/0043dd54-cb6e-45f9-9f2d-8742b3262588/_apis/build/Definitions/4?revision=2"
+  },
+  "deleted": null,
+  "deletedBy": null,
+  "deletedDate": null,
+  "deletedReason": null,
+  "demands": null,
+  "finishTime": "2026-09-29T18:16:14.267615+00:00",
+  "id": 30,
+  "keepForever": true,
+  "lastChangedBy": {
+    "descriptor": "s2s.MDAwMDAwMDItMDAwMC04ODg4LTgwMDAtMDAwMDAwMDAwMDAwQDJjODk1OTA4LTA0ZTAtNDk1Mi04OWZkLTU0YjAwNDZkNjI4OA",
+    "directoryAlias": null,
+    "displayName": "Microsoft.VisualStudio.Services.TFS",
+    "id": "00000002-0000-8888-8000-000000000000",
+    "imageUrl": "https://dev.azure.com/emmanuelmelanie60/_apis/GraphProfile/MemberAvatars/s2s.MDAwMDAwMDItMDAwMC04ODg4LTgwMDAtMDAwMDAwMDAwMDAwQDJjODk1OTA4LTA0ZTAtNDk1Mi04OWZkLTU0YjAwNDZkNjI4OA",
+    "inactive": null,
+    "isAadIdentity": null,
+    "isContainer": null,
+    "isDeletedInOrigin": null,
+    "profileUrl": null,
+    "uniqueName": "00000002-0000-8888-8000-000000000000@2c895908-04e0-4952-89fd-54b0046d6288",
+    "url": "https://spsprodcin3.vssps.visualstudio.com/A37287051-5941-4332-8721-5751d445feaf/_apis/Identities/00000002-0000-8888-8000-000000000000"
+  },
+  "lastChangedDate": "2026-09-29T18:16:14.410000+00:00",
+  "logs": {
+    "id": 0,
+    "type": "Container",
+    "url": "https://dev.azure.com/emmanuelmelanie60/0043dd54-cb6e-45f9-9f2d-8742b3262588/_apis/build/builds/30/logs"
+  },
+  "orchestrationPlan": {
+    "orchestrationType": null,
+    "planId": "1e4c8552-1144-4f93-aa5f-7dff8a74e547"
+  },
+  "parameters": null,
+  "plans": [
+    {
+      "orchestrationType": null,
+      "planId": "1e4c8552-1144-4f93-aa5f-7dff8a74e547"
+    }
+  ],
+  "priority": "normal",
+  "project": {
+    "abbreviation": null,
+    "defaultTeamImageUrl": null,
+    "description": null,
+    "id": "0043dd54-cb6e-45f9-9f2d-8742b3262588",
+    "lastUpdateTime": "2026-09-25T19:28:42.237Z",
+    "name": "EpicBook-Deployment",
+    "revision": 35,
+    "state": "wellFormed",
+    "url": "https://dev.azure.com/emmanuelmelanie60/_apis/projects/0043dd54-cb6e-45f9-9f2d-8742b3262588",
+    "visibility": "private"
+  },
+  "properties": {},
+  "quality": null,
+  "queue": {
+    "id": 44,
+    "name": "Azure Pipelines",
+    "pool": {
+      "id": 9,
+      "isHosted": true,
+      "name": "Azure Pipelines"
+    },
+    "url": null
+  },
+  "queueOptions": null,
+  "queuePosition": null,
+  "queueTime": "2026-09-29T18:10:50.702579+00:00",
+  "reason": "individualCI",
+  "repository": {
+    "checkoutSubmodules": false,
+    "clean": null,
+    "defaultBranch": null,
+    "id": "sundayinibehe75-afk/theepicbook",
+    "name": null,
+    "properties": null,
+    "rootFolder": null,
+    "type": "GitHub",
+    "url": "https://github.com:443/sundayinibehe75-afk/theepicbook"
+  },
+  "requestedBy": {
+    "descriptor": "s2s.MDAwMDAwMDItMDAwMC04ODg4LTgwMDAtMDAwMDAwMDAwMDAwQDJjODk1OTA4LTA0ZTAtNDk1Mi04OWZkLTU0YjAwNDZkNjI4OA",
+    "directoryAlias": null,
+    "displayName": "Microsoft.VisualStudio.Services.TFS",
+    "id": "00000002-0000-8888-8000-000000000000",
+    "imageUrl": "https://dev.azure.com/emmanuelmelanie60/_apis/GraphProfile/MemberAvatars/s2s.MDAwMDAwMDItMDAwMC04ODg4LTgwMDAtMDAwMDAwMDAwMDAwQDJjODk1OTA4LTA0ZTAtNDk1Mi04OWZkLTU0YjAwNDZkNjI4OA",
+    "inactive": null,
+    "isAadIdentity": null,
+    "isContainer": null,
+    "isDeletedInOrigin": null,
+    "profileUrl": null,
+    "uniqueName": "00000002-0000-8888-8000-000000000000@2c895908-04e0-4952-89fd-54b0046d6288",
+    "url": "https://spsprodcin3.vssps.visualstudio.com/A37287051-5941-4332-8721-5751d445feaf/_apis/Identities/00000002-0000-8888-8000-000000000000"
+  },
+  "requestedFor": {
+    "descriptor": "s2s.MDAwMDAwMDItMDAwMC04ODg4LTgwMDAtMDAwMDAwMDAwMDAwQDJjODk1OTA4LTA0ZTAtNDk1Mi04OWZkLTU0YjAwNDZkNjI4OA",
+    "directoryAlias": null,
+    "displayName": "Microsoft.VisualStudio.Services.TFS",
+    "id": "00000002-0000-8888-8000-000000000000",
+    "imageUrl": "https://dev.azure.com/emmanuelmelanie60/_apis/GraphProfile/MemberAvatars/s2s.MDAwMDAwMDItMDAwMC04ODg4LTgwMDAtMDAwMDAwMDAwMDAwQDJjODk1OTA4LTA0ZTAtNDk1Mi04OWZkLTU0YjAwNDZkNjI4OA",
+    "inactive": null,
+    "isAadIdentity": null,
+    "isContainer": null,
+    "isDeletedInOrigin": null,
+    "profileUrl": null,
+    "uniqueName": "00000002-0000-8888-8000-000000000000@2c895908-04e0-4952-89fd-54b0046d6288",
+    "url": "https://spsprodcin3.vssps.visualstudio.com/A37287051-5941-4332-8721-5751d445feaf/_apis/Identities/00000002-0000-8888-8000-000000000000"
+  },
+  "result": "succeeded",
+  "retainedByRelease": false,
+  "sourceBranch": "refs/heads/main",
+  "sourceVersion": "714d20d263f6f9d11a4d362e80417317590cef9b",
+  "startTime": "2026-09-29T18:10:55.283709+00:00",
+  "status": "completed",
+  "tags": [],
+  "triggerInfo": {
+    "ci.message": "Enable SSL for MySQL checks in verification play",
+    "ci.sourceBranch": "refs/heads/main",
+    "ci.sourceSha": "714d20d263f6f9d11a4d362e80417317590cef9b",
+    "ci.triggerRepository": "sundayinibehe75-afk/theepicbook"
+  },
+  "triggeredByBuild": null,
+  "uri": "vstfs:///Build/Build/30",
+  "url": "https://dev.azure.com/emmanuelmelanie60/0043dd54-cb6e-45f9-9f2d-8742b3262588/_apis/build/Builds/30",
+  "validationResults": []
+}
